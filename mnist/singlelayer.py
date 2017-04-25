@@ -5,6 +5,8 @@ mnist = input_data.read_data_sets("MNIST_data/", one_hot=False)
 trX, trY, teX, teY = mnist.train.images, mnist.train.labels, mnist.test.images, mnist.test.labels
 
 np.set_printoptions(threshold='nan')
+np.set_printoptions(suppress=True)
+np.set_printoptions(formatter={'': lambda x: 'float: ' + str(x)})
 
 nEpochs = 100000
 
@@ -17,7 +19,7 @@ def sample(X):
         U[i][u] = 1
     return U
 
-nPoints = 500
+nPoints = 1000
 trX = trX[:nPoints]
 trY = trY[:nPoints]
 
@@ -29,7 +31,7 @@ nData = X.shape[0]
 
 gain = 0.01
 
-W1 = np.zeros((trX.shape[1],10)) + 0.001
+W1 = np.zeros((trX.shape[1],10)) + 1.0
 #W1 = np.random.uniform(low=0.0001, high = 0.002, size = (trX.shape[1],10))
 
 log = []
@@ -37,7 +39,8 @@ log = []
 batchSize = 100
 
 for k in range(nEpochs):
-    gain *= 0.999
+    confusion = np.zeros((10,10))
+    #gain *= 0.999
     idxList = np.arange(nData)
     np.random.shuffle(idxList)
 
@@ -54,14 +57,14 @@ for k in range(nEpochs):
         Y = np.argmax(U1,axis=1)
 
         for i in range(len(Y)):
-            if Y[i] == T[idx][i]: 
-                W1.T[Y[i]] += U0[i] * gain / U0[i].sum()
-            if Y[i] != T[idx][i]:
-                W1.T[Y[i]] -= U0[i] * gain / U0[i].sum()
+            #if Y[i] == T[idx][i]: W1.T[Y[i]] += U0[i] * gain / U0[i].sum()
+            if Y[i] != T[idx][i]: W1.T[Y[i]] -= U0[i] * gain #/ U0[i].sum()
+            confusion[T[idx][i]][Y[i]] += 1
 
         acc = ((Y == T[idx]).sum())/float(len(T[idx]))
         batchlog.append(acc)
 
+    print confusion
     acc = sum(batchlog)/len(batchlog)
     log.append(str(acc))
     print "%s Epoch: Acc %s"%(k,acc)
