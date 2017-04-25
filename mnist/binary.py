@@ -8,7 +8,7 @@ np.set_printoptions(threshold='nan')
 np.set_printoptions(suppress=True)
 np.set_printoptions(formatter={'': lambda x: 'float: ' + str(x)})
 
-nEpochs = 100000
+nEpochs = 1000000
 
 def sample(X):
     U = np.zeros(X.shape)
@@ -31,11 +31,15 @@ thresh = 0.1
 X = (trX > thresh).astype("int8")
 T = trY
 
+
+print X.sum(axis=1)
+quit()
+
 nData = X.shape[0]
 
-gain = 1.0
+gain = 0.1
 
-W1 = np.zeros((trX.shape[1],10)) + 1.0
+W1 = np.zeros((trX.shape[1],2)) + 1.0
 #W1 = np.random.uniform(low=0.0001, high = 0.002, size = (trX.shape[1],10))
 
 log = []
@@ -43,7 +47,7 @@ log = []
 batchSize = 1
 
 for k in range(nEpochs):
-    confusion = np.zeros((10,10))
+    confusion = np.zeros((2,2))
     #gain *= 0.999
     idxList = np.arange(nData)
     np.random.shuffle(idxList)
@@ -59,10 +63,10 @@ for k in range(nEpochs):
         U1 = sample(H1)
 
         Y = np.argmax(U1,axis=1)
-
+        print H1
+        print T[idx]
         for i in range(len(Y)):
             if Y[i] == T[idx][i]: W1.T[Y[i]] += U0[i] * gain / U0[i].sum()
-            #if Y[i] != T[idx][i]: W1.T[Y[i]] -= U0[i] * gain #/ U0[i].sum()
             confusion[T[idx][i]][Y[i]] += 1
 
         acc = ((Y == T[idx]).sum())/float(len(T[idx]))
@@ -71,12 +75,7 @@ for k in range(nEpochs):
     print confusion
     acc = sum(batchlog)/len(batchlog)
     log.append(str(acc))
-    print "%s Epoch: Acc %s"%(k,acc)
-    #print W1
-    #print U0
-    #print H1[0]
-    #print U1[0]
-    #print T[idx][0]
+    print "-------- %s Epoch: Acc %s"%(k,acc)
 
 print W1
 
