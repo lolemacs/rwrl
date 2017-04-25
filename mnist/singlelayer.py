@@ -51,14 +51,14 @@ for k in range(nEpochs):
         U0 = X[idx]
 
         H1 = U0.dot(W1)
-        H1 = np.exp(H1)
+        #H1 = np.exp(H1)
         U1 = sample(H1)
 
         Y = np.argmax(U1,axis=1)
 
         for i in range(len(Y)):
-            #if Y[i] == T[idx][i]: W1.T[Y[i]] += U0[i] * gain / U0[i].sum()
-            if Y[i] != T[idx][i]: W1.T[Y[i]] -= U0[i] * gain #/ U0[i].sum()
+            if Y[i] == T[idx][i]: W1.T[Y[i]] += U0[i] * gain / U0[i].sum()
+            #if Y[i] != T[idx][i]: W1.T[Y[i]] -= U0[i] * gain #/ U0[i].sum()
             confusion[T[idx][i]][Y[i]] += 1
 
         acc = ((Y == T[idx]).sum())/float(len(T[idx]))
