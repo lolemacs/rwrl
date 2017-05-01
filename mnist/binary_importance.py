@@ -19,6 +19,11 @@ def sample(X):
         U[i][u] = 1
     return U
 
+def imp(W):
+    F = W / W.sum(axis=1)[:,np.newaxis]
+    H = W / (1-F)
+    return H
+
 nPoints = 10
 trX = trX[:nPoints]
 trY = trY[:nPoints]
@@ -33,10 +38,9 @@ T = trY
 
 nData = X.shape[0]
 
-gain = 0.1
+gain = 0.01
 
 W1 = np.zeros((trX.shape[1],2)) + 1.0
-#W1 = np.random.uniform(low=0.0001, high = 0.002, size = (trX.shape[1],10))
 
 log = []
 
@@ -54,16 +58,15 @@ for k in range(nEpochs):
 
         U0 = X[idx]
 
-        H1 = U0.dot(W1)
-        #H1 = np.exp(H1)
+        H1 = U0.dot(imp(W1))
         U1 = sample(H1)
 
         Y = np.argmax(U1,axis=1)
         print H1
         print T[idx]
         for i in range(len(Y)):
-            if Y[i] == T[idx][i]: W1.T[Y[i]] += U0[i] * gain / U0[i].sum()
-            if Y[i] != T[idx][i]: W1.T[Y[i]] -= U0[i] * gain / U0[i].sum()
+            if Y[i] == T[idx][i]: W1.T[Y[i]] += U0[i] * gain #/ U0[i].sum()
+            #if Y[i] != T[idx][i]: W1.T[Y[i]] -= U0[i] * gain / U0[i].sum()
             confusion[T[idx][i]][Y[i]] += 1
 
         acc = ((Y == T[idx]).sum())/float(len(T[idx]))
