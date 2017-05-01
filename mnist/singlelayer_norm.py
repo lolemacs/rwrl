@@ -8,7 +8,7 @@ np.set_printoptions(threshold='nan')
 np.set_printoptions(suppress=True)
 np.set_printoptions(formatter={'': lambda x: 'float: ' + str(x)})
 
-nEpochs = 100000
+nEpochs = 5000
 
 def sample(X):
     U = np.zeros(X.shape)
@@ -19,7 +19,19 @@ def sample(X):
         U[i][u] = 1
     return U
 
-nPoints = 10
+def hard_sample(X):
+    U = np.zeros(X.shape)
+    for i in range(len(X)):
+        x = X[i]
+        u = np.argmax(x)
+        U[i][u] = 1
+    return U
+
+def imp(W):
+    H = W / W.sum(axis=1)[:,np.newaxis]
+    return H
+
+nPoints = 1000
 trX = trX[:nPoints]
 trY = trY[:nPoints]
 
@@ -29,14 +41,13 @@ T = trY
 
 nData = X.shape[0]
 
-gain = 1.0
+gain = 0.01
 
-W1 = np.zeros((trX.shape[1],10)) + 1.0
-#W1 = np.random.uniform(low=0.0001, high = 0.002, size = (trX.shape[1],10))
+W1 = np.zeros((trX.shape[1],10)) + 0.5
 
 log = []
 
-batchSize = 1
+batchSize = 10
 
 for k in range(nEpochs):
     confusion = np.zeros((10,10))
@@ -44,38 +55,33 @@ for k in range(nEpochs):
     idxList = np.arange(nData)
     np.random.shuffle(idxList)
 
-    batchlog = []
+    acc_log = []
+    hard_acc_log = []
     for j in range(nData/batchSize):
         idx = idxList[j*batchSize:(j+1)*batchSize]
 
         U0 = X[idx]
 
-        H1 = U0.dot(W1)
-        #H1 = np.exp(H1)
+        H1 = U0.dot(imp(W1))
         U1 = sample(H1)
+        hard_U1 = hard_sample(H1)
 
         Y = np.argmax(U1,axis=1)
+        hard_Y = np.argmax(hard_U1,axis=1)
 
         for i in range(len(Y)):
-            if Y[i] == T[idx][i]: W1.T[Y[i]] += U0[i] * gain / U0[i].sum()
-            #if Y[i] != T[idx][i]: W1.T[Y[i]] -= U0[i] * gain #/ U0[i].sum()
+            if Y[i] == T[idx][i]: W1.T[Y[i]] += U0[i] * gain / (U0[i].sum())
             confusion[T[idx][i]][Y[i]] += 1
 
         acc = ((Y == T[idx]).sum())/float(len(T[idx]))
-        batchlog.append(acc)
+        hard_acc = ((hard_Y == T[idx]).sum())/float(len(T[idx]))
+        acc_log.append(acc)
+        hard_acc_log.append(hard_acc)
 
     print confusion
-    acc = sum(batchlog)/len(batchlog)
-    log.append(str(acc))
-    print "%s Epoch: Acc %s"%(k,acc)
-    #print W1
-    #print U0
-    #print H1[0]
-    #print U1[0]
-    #print T[idx][0]
+    acc = sum(acc_log)/len(acc_log)
+    hard_acc = sum(hard_acc_log)/len(hard_acc_log)
+    print "-------- %s Epoch: Acc %s    HardAcc %s"%(k,acc,hard_acc)
 
-print W1
 
-f = open("dump","w")
-f.write("\n".join(log))
-f.close()
+print imp(W1)

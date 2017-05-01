@@ -8,7 +8,7 @@ np.set_printoptions(threshold='nan')
 np.set_printoptions(suppress=True)
 np.set_printoptions(formatter={'': lambda x: 'float: ' + str(x)})
 
-nEpochs = 100000
+nEpochs = 50000
 
 def sample(X):
     U = np.zeros(X.shape)
@@ -18,6 +18,11 @@ def sample(X):
         u = np.random.choice(len(x), p=x/sum(x))
         U[i][u] = 1
     return U
+
+def imp(W):
+    F = W / W.sum(axis=1)[:,np.newaxis]
+    H = W / (1-F)
+    return H
 
 nPoints = 10
 trX = trX[:nPoints]
@@ -29,10 +34,9 @@ T = trY
 
 nData = X.shape[0]
 
-gain = 1.0
+gain = 0.0005
 
-W1 = np.zeros((trX.shape[1],10)) + 1.0
-#W1 = np.random.uniform(low=0.0001, high = 0.002, size = (trX.shape[1],10))
+W1 = np.zeros((trX.shape[1],10)) + 0.5
 
 log = []
 
@@ -50,15 +54,15 @@ for k in range(nEpochs):
 
         U0 = X[idx]
 
-        H1 = U0.dot(W1)
-        #H1 = np.exp(H1)
+        H1 = U0.dot(imp(W1))
         U1 = sample(H1)
 
         Y = np.argmax(U1,axis=1)
-
+        #print H1
+        #print T[idx]
         for i in range(len(Y)):
-            if Y[i] == T[idx][i]: W1.T[Y[i]] += U0[i] * gain / U0[i].sum()
-            #if Y[i] != T[idx][i]: W1.T[Y[i]] -= U0[i] * gain #/ U0[i].sum()
+            if Y[i] == T[idx][i]: W1.T[Y[i]] += U0[i] * gain #/ U0[i].sum()
+            #if Y[i] != T[idx][i]: W1.T[Y[i]] -= U0[i] * gain / U0[i].sum()
             confusion[T[idx][i]][Y[i]] += 1
 
         acc = ((Y == T[idx]).sum())/float(len(T[idx]))
@@ -67,14 +71,9 @@ for k in range(nEpochs):
     print confusion
     acc = sum(batchlog)/len(batchlog)
     log.append(str(acc))
-    print "%s Epoch: Acc %s"%(k,acc)
-    #print W1
-    #print U0
-    #print H1[0]
-    #print U1[0]
-    #print T[idx][0]
+    print "-------- %s Epoch: Acc %s"%(k,acc)
 
-print W1
+print imp(W1)
 
 f = open("dump","w")
 f.write("\n".join(log))
