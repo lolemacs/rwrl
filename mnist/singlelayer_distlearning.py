@@ -8,7 +8,7 @@ np.set_printoptions(threshold='nan')
 np.set_printoptions(suppress=True)
 np.set_printoptions(formatter={'': lambda x: 'float: ' + str(x)})
 
-nEpochs = 100000
+nEpochs = 30
 
 def sample(X):
     U = np.zeros(X.shape)
@@ -32,13 +32,13 @@ T = trY
 
 nData = X.shape[0]
 
-gain = 0.01
+gain = 0.001
 
 W1 = np.zeros((trX.shape[1],10)) + 0.5
 
 log = []
 
-batchSize = 512
+batchSize = nData/10
 
 for k in range(nEpochs):
     confusion = np.zeros((10,10))
@@ -53,6 +53,7 @@ for k in range(nEpochs):
         U0 = X[idx]
 
         H1 = U0.dot(W1)
+
         U1 = H1 / H1.sum(axis=1)[:,np.newaxis]
         hard_U1 = hard_sample(H1)
 
@@ -60,9 +61,11 @@ for k in range(nEpochs):
         hard_Y = np.argmax(hard_U1,axis=1)
 
         for i in range(len(Y)):
-            #print U0[i] * gain * U1[i][T[idx][i]]
-            W1.T[T[idx][i]] += U0[i] * gain * U1[i][T[idx][i]] #/ U0[i].sum()
+            W1.T[T[idx][i]] += U0[i] * gain * U1[i][T[idx][i]]**-8  #/ (U0[i].sum()**0.4)
             confusion[T[idx][i]][hard_Y[i]] += 1
+
+        #print T[idx][:10]
+        #print U1[:10]
 
         #acc = ((Y == T[idx]).sum())/float(len(T[idx]))
         hard_acc = ((hard_Y == T[idx]).sum())/float(len(T[idx]))
